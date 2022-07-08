@@ -22,6 +22,10 @@ int main()
 
     const int gravity{1}; //acceleration due to gravity in pixels per frame per frame; (p/f)/f
 
+    Texture2D scarfy = LoadTexture("textures/scarfy.png");
+    Rectangle scarfyRec; 
+    Vector2 scarfyPos;
+
     int fps{60};
 
     SetTargetFPS(fps);
