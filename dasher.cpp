@@ -29,9 +29,9 @@ int main()
     scarfyPos.y = windowHeight - scarfyRec.height;
 
     int frame{0}; //initializing animation frame for scarfy, the character
-    const float updateTime {1.0/10.0}; //amount of time that passes in between each animation frame; units is in time
+    const float updateTime {1.0/12.0}; //amount of time that passes in between each animation frame; units is in time
     float runningTime{};
-    int fps{9};
+    int fps{60};
 
     SetTargetFPS(fps);
 
@@ -44,23 +44,6 @@ int main()
         //start drawing
         BeginDrawing();
         ClearBackground(WHITE);
-
-        //update running time
-        runningTime += dT;
-        if (runningTime>= updateTime)
-        {
-            runningTime = 0.0;
-            //updating character animation frame
-            scarfyRec.x = frame*scarfyRec.width;
-            frame++;
-            if (frame > 5)
-            {
-                frame = 0;
-            }
-
-            DrawTextureRec(scarfy, scarfyRec, scarfyPos, WHITE);
-
-        }
 
         //check to see if the rectangle is on the ground
         if(scarfyPos.y >= windowHeight - scarfyRec.height)
@@ -86,6 +69,22 @@ int main()
 
         //update position
         scarfyPos.y += velocity * dT; //scaling the position by delta Time
+
+        //update running time
+        runningTime += dT;
+        if (runningTime>= updateTime)
+        {
+            runningTime = 0.0;
+            //updating character animation frame
+            scarfyRec.x = frame * scarfyRec.width;
+            ++frame;
+            if (frame > 5)
+            {
+                frame = 0;
+            }
+        }
+
+        DrawTextureRec(scarfy, scarfyRec, scarfyPos, WHITE);
 
         //stop drawing
         EndDrawing();
