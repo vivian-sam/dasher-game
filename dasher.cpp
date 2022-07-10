@@ -9,33 +9,61 @@ int main()
     //initialize popup window
     InitWindow(windowWidth, windowHeight, "Dapper Dasher");
 
-    //rectangle dimensions
-    const int rectWidth{50};
-    const int rectHeight{80};
-
-    //position and velocities of rectangle
-    int posY{windowHeight - rectHeight}; //intializes so that rectangle starts on ground
-    int velocity{0};// intialize velocity to 10 pixels/frame
-    int jumpVel{-15};
+    //velocities for character
+    int velocity{60};// intialize velocity to 60 pixels/sec (target FPS is set to 60)
+    int jumpVel{-500}; //pixels per second
     int noMove{0};
     bool isInAir{false}; //boolean to check if rectangle is in the air
 
-    const int gravity{1}; //acceleration due to gravity in pixels per frame per frame; (p/f)/f
+    const int gravity{1000}; //acceleration due to gravity in pixels per second per second; (p/s)/s
 
-    int fps{60};
+    //below is the code for the character "scarfy"
+    Texture2D scarfy = LoadTexture("textures/scarfy.png");
+    Rectangle scarfyRec;    //defines the specific frame we want, which will be a rectangle drawn on the sprite sheet
+    scarfyRec.width = scarfy.width/6;   //there are 6 frames in the sprite sheet; definining the width of just one frame
+    scarfyRec.height = scarfy.height;   //defining the height of the rectangle for the sprite
+    scarfyRec.x = 0;                    //x position of the rectangle where it starts on sprite sheet
+    scarfyRec.y = 0;                    //y position of the rectangle where it starts on the sprite sheet
+    Vector2 scarfyPos;      // defines the position of the character;
+    scarfyPos.x = windowWidth/2 - scarfyRec.width/2; //positions the sprite image to center of screen
+    scarfyPos.y = windowHeight - scarfyRec.height;
+
+    int frame{0}; //initializing animation frame for scarfy, the character
+    const float updateTime {1.0/10.0}; //amount of time that passes in between each animation frame; units is in time
+    float runningTime{};
+    int fps{9};
 
     SetTargetFPS(fps);
+
 
     //while esc/x button not pressed, then run the game code in while loop
     while(!WindowShouldClose())
     {
+        const float dT{ GetFrameTime() }; //gets time since the last frame
+
         //start drawing
         BeginDrawing();
         ClearBackground(WHITE);
 
+        //update running time
+        runningTime += dT;
+        if (runningTime>= updateTime)
+        {
+            runningTime = 0.0;
+            //updating character animation frame
+            scarfyRec.x = frame*scarfyRec.width;
+            frame++;
+            if (frame > 5)
+            {
+                frame = 0;
+            }
+
+            DrawTextureRec(scarfy, scarfyRec, scarfyPos, WHITE);
+
+        }
 
         //check to see if the rectangle is on the ground
-        if(posY >= windowHeight - rectHeight)
+        if(scarfyPos.y >= windowHeight - scarfyRec.height)
         {   
             isInAir = false;
             velocity = noMove;
@@ -44,7 +72,7 @@ int main()
         else
         {
             //apply gravity because rectangle is in the air
-            velocity += gravity;        
+            velocity += gravity * dT;     //scaling by delta time    
             isInAir = true;
         }
      
@@ -57,15 +85,12 @@ int main()
 
 
         //update position
-        posY += velocity;
-
-
-        DrawRectangle(windowWidth/2, posY, rectWidth, rectHeight, BLUE);
+        scarfyPos.y += velocity * dT; //scaling the position by delta Time
 
         //stop drawing
         EndDrawing();
     }
-
+    UnloadTexture(scarfy);
     CloseWindow();
     
     return 0;
