@@ -1,5 +1,16 @@
 #include "raylib.h"
 
+//animation variables
+struct AnimData
+{
+    Rectangle rec;
+    Vector2 pos;
+    int frame;
+    float updateTime;
+    float runningTime;
+};
+
+
 int main()
 {
     //window dimensions
@@ -9,30 +20,40 @@ int main()
     //initialize popup window
     InitWindow(windowWidth, windowHeight, "Dapper Dasher");
 
-    //velocities for character
-    int velocity{60};// intialize velocity to 60 pixels/sec (target FPS is set to 60)
-    int jumpVel{-500}; //pixels per second
-    int noMove{0};
+    //vertical (jump) velocities for character
+    int velocity{60};    // intialize velocity to 60 pixels/sec (target FPS is set to 60)
+    int jumpVel{-500};   //pixels per second
+    int noMove{0};       //when stationary, velocity is 0
     bool isInAir{false}; //boolean to check if rectangle is in the air
 
     const int gravity{1000}; //acceleration due to gravity in pixels per second per second; (p/s)/s
 
-    //below is the code for the character "scarfy"
+    //animation data for character "scarfy" variables
     Texture2D scarfy = LoadTexture("textures/scarfy.png");
-    Rectangle scarfyRec;    //defines the specific frame we want, which will be a rectangle drawn on the sprite sheet
-    scarfyRec.width = scarfy.width/6;   //there are 6 frames in the sprite sheet; definining the width of just one frame
-    scarfyRec.height = scarfy.height;   //defining the height of the rectangle for the sprite
-    scarfyRec.x = 0;                    //x position of the rectangle where it starts on sprite sheet
-    scarfyRec.y = 0;                    //y position of the rectangle where it starts on the sprite sheet
-    Vector2 scarfyPos;      // defines the position of the character;
-    scarfyPos.x = windowWidth/2 - scarfyRec.width/2; //positions the sprite image to center of screen
-    scarfyPos.y = windowHeight - scarfyRec.height;
+    AnimData scarfyData
+                        { 
+                        {0.0, 0.0, scarfy.width/6, scarfy.height}, //rectangle x,y, width, height
+                        {windowWidth/2 - scarfyData.rec.width/2, windowHeight - scarfy.height}, //sprite position x and y
+                         0,         // int starting sprite frame
+                         1.0/12.0,  // float update time for each animation frame
+                         0          // float running time
+                        };
 
-    int frame{0}; //initializing animation frame for scarfy, the character
-    const float updateTime {1.0/12.0}; //amount of time that passes in between each animation frame; units is in time
-    float runningTime{};
+    //animation daa for nebula variables
+    Texture2D nebula = LoadTexture("textures/12_nebula_spritesheet.png");
+    AnimData nebData
+                    {   
+                        {0.0, 0.0, nebula.width/8, nebula.height/8},    //rectangle x,y, width, height
+                        {windowWidth, windowHeight - nebData.rec.height}, //sprite position x and y
+                        0,          // int starting sprite frame
+                        1.0/15.0,   // float update time for each animation frame
+                        0           // float running time
+                    };
+
+    //velocities for nebula
+    int nebVel{-600}; //initialize horizontal velocity in pixels/second
+
     int fps{60};
-
     SetTargetFPS(fps);
 
 
@@ -43,10 +64,10 @@ int main()
 
         //start drawing
         BeginDrawing();
-        ClearBackground(WHITE);
+        ClearBackground(DARKGRAY);
 
-        //check to see if the rectangle is on the ground
-        if(scarfyPos.y >= windowHeight - scarfyRec.height)
+        //check to see if character is on the ground; if so then vertical velocity is 0
+        if(scarfyData.pos.y >= windowHeight - scarfy.height)
         {   
             isInAir = false;
             velocity = noMove;
@@ -54,42 +75,67 @@ int main()
 
         else
         {
-            //apply gravity because rectangle is in the air
-            velocity += gravity * dT;     //scaling by delta time    
-            isInAir = true;
+            //apply gravity because character is in the air
+            velocity += gravity * dT;     //scaling by delta time, which is the time since the last frame    
+            isInAir = true;               
         }
      
-        //check for jump; jumps when spacebar is pressed and if rectangle is not in the air
+        //characer jumps when spacebar is pressed and if character is not already in the air
         if(IsKeyPressed(KEY_SPACE) && !isInAir)
         {
             velocity += jumpVel;
-            isInAir = true;
+            isInAir = true;     //setting boolean to true so that double/triple jumps not possible
         }
 
 
-        //update position
-        scarfyPos.y += velocity * dT; //scaling the position by delta Time
+        //update Scarfy's vertical position
+        scarfyData.pos.y += velocity * dT; //scaling the position by delta Time
 
-        //update running time
-        runningTime += dT;
-        if (runningTime>= updateTime)
+        //update nebula's horizontal postion
+        nebData.pos.x += nebVel * dT;
+
+        //update character animation frame if character not already in the air
+        if (!isInAir)
         {
-            runningTime = 0.0;
-            //updating character animation frame
-            scarfyRec.x = frame * scarfyRec.width;
-            ++frame;
-            if (frame > 5)
+            //update the running time by adding the time between frames
+            scarfyData.runningTime += dT;
+            if (scarfyData.runningTime >= scarfyData.updateTime)
             {
-                frame = 0;
+                scarfyData.runningTime = 0.0;
+                //updating character animation frame
+                scarfyData.rec.x = scarfyData.frame * scarfyData.rec.width;
+                ++scarfyData.frame;
+                if (scarfyData.frame > 5)
+                {
+                    scarfyData.frame = 0;
+                }
             }
         }
 
-        DrawTextureRec(scarfy, scarfyRec, scarfyPos, WHITE);
+        //update nebula animation frames
+        nebData.runningTime += dT;
+        if (nebData.runningTime >= nebData.updateTime)
+        {
+            nebData.runningTime = 0.0;
+            nebData.rec.x = nebData.frame* nebData.rec.width;
+            ++nebData.frame;
+            if(nebData.frame > 7)
+            {
+                nebData.frame = 0;
+            }
+        }
+
+        //Draw scarfy
+        DrawTextureRec(scarfy, scarfyData.rec, scarfyData.pos, WHITE);
+        //Draw nebula
+        DrawTextureRec(nebula, nebData.rec, nebData.pos, WHITE);
 
         //stop drawing
         EndDrawing();
     }
     UnloadTexture(scarfy);
+    UnloadTexture(nebula);
+
     CloseWindow();
     
     return 0;
