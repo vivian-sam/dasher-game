@@ -42,20 +42,27 @@ int main()
     //animation daa for nebula variables
     Texture2D nebula = LoadTexture("textures/12_nebula_spritesheet.png");
     AnimData nebData
-                    {   
-                        {0.0, 0.0, nebula.width/8, nebula.height/8},    //rectangle x,y, width, height
-                        {windowWidth, windowHeight - nebData.rec.height}, //sprite position x and y
-                        0,          // int starting sprite frame
-                        1.0/15.0,   // float update time for each animation frame
-                        0           // float running time
-                    };
+    {   
+        {0.0, 0.0, nebula.width/8, nebula.height/8},    //rectangle x,y, width, height
+        {windowWidth, windowHeight - nebData.rec.height}, //sprite position x and y
+        0,          // int starting sprite frame
+        1.0/15.0,   // float update time for each animation frame
+        0           // float running time
+    };
+
+    AnimData neb2Data
+    {
+        {0.0, 0.0, nebula.width/8, nebula.height/8},    //rectangle x,y, width, height
+        {windowWidth + 300 , windowHeight - nebData.rec.height}, //sprite position x and y
+        0,          // int starting sprite frame
+        1.0/15.0,   // float update time for each animation frame
+        0           // float running time
+    };
+
+    AnimData nebulae[2]{nebData, neb2Data};
 
     //velocities for nebula
     int nebVel{-600}; //initialize horizontal velocity in pixels/second
-
-    Texture2D scarfy = LoadTexture("textures/scarfy.png");
-    Rectangle scarfyRec; 
-    Vector2 scarfyPos;
 
     int fps{60};
     SetTargetFPS(fps);
@@ -96,7 +103,10 @@ int main()
         scarfyData.pos.y += velocity * dT; //scaling the position by delta Time
 
         //update nebula's horizontal postion
-        nebData.pos.x += nebVel * dT;
+        nebulae[0].pos.x += nebVel * dT;
+
+        //update second nebula's horizontal postion       
+        nebulae[1].pos.x += nebVel * dT;
 
         //update character animation frame if character not already in the air
         if (!isInAir)
@@ -117,22 +127,36 @@ int main()
         }
 
         //update nebula animation frames
-        nebData.runningTime += dT;
-        if (nebData.runningTime >= nebData.updateTime)
+        nebulae[0].runningTime += dT;
+        if ( nebulae[0].runningTime >= nebulae[0].updateTime)
         {
-            nebData.runningTime = 0.0;
-            nebData.rec.x = nebData.frame* nebData.rec.width;
-            ++nebData.frame;
-            if(nebData.frame > 7)
+            nebulae[0].runningTime = 0.0;
+            nebulae[0].rec.x = nebulae[0].frame * nebulae[0].rec.width;
+            ++nebulae[0].frame;
+            if(nebulae[0].frame > 7)
             {
-                nebData.frame = 0;
+                nebulae[0].frame = 0;
+            }
+        }
+
+        nebulae[1].runningTime += dT;
+        if ( nebulae[1].runningTime >= nebulae[1].updateTime)
+        {
+            nebulae[1].runningTime = 0.0;
+            nebulae[1].rec.x = nebulae[1].frame * nebulae[1].rec.width;
+            ++nebulae[1].frame;
+            if(nebulae[1].frame > 7)
+            {
+                nebulae[1].frame = 0;
             }
         }
 
         //Draw scarfy
         DrawTextureRec(scarfy, scarfyData.rec, scarfyData.pos, WHITE);
         //Draw nebula
-        DrawTextureRec(nebula, nebData.rec, nebData.pos, WHITE);
+        DrawTextureRec(nebula, nebulae[0].rec, nebulae[0].pos, WHITE);
+        //Draw second nebula
+        DrawTextureRec(nebula, nebulae[1].rec, nebulae[1].pos, WHITE);
 
         //stop drawing
         EndDrawing();
