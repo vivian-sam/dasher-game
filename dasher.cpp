@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include <iostream>;
 
 //animation variables
 struct AnimData
@@ -20,13 +21,16 @@ int main()
     //initialize popup window
     InitWindow(windowWidth, windowHeight, "Dapper Dasher");
 
+    int valueMin {300}; //minimum value between each spawning nebula
+    int valueMax {600}; //maximum value between each spawning nebula
+
     //vertical (jump) velocities for character
     int velocity{60};    // intialize velocity to 60 pixels/sec (target FPS is set to 60)
     int jumpVel{-500};   //pixels per second
     int noMove{0};       //when stationary, velocity is 0
     bool isInAir{false}; //boolean to check if rectangle is in the air
 
-    const int gravity{1000}; //acceleration due to gravity in pixels per second per second; (p/s)/s
+    const int gravity{900}; //acceleration due to gravity in pixels per second per second; (p/s)/s
 
     //animation data for character "scarfy" variables
     Texture2D scarfy = LoadTexture("textures/scarfy.png");
@@ -38,31 +42,25 @@ int main()
                          1.0/12.0,  // float update time for each animation frame
                          0          // float running time
                         };
-
+  
     //animation daa for nebula variables
     Texture2D nebula = LoadTexture("textures/12_nebula_spritesheet.png");
-    AnimData nebData
-    {   
-        {0.0, 0.0, nebula.width/8, nebula.height/8},    //rectangle x,y, width, height
-        {windowWidth, windowHeight - nebData.rec.height}, //sprite position x and y
-        0,          // int starting sprite frame
-        1.0/15.0,   // float update time for each animation frame
-        0           // float running time
-    };
 
-    AnimData neb2Data
+    AnimData nebulae[6]{};
+
+    for (int i = 0; i < 6; i++)
     {
-        {0.0, 0.0, nebula.width/8, nebula.height/8},    //rectangle x,y, width, height
-        {windowWidth + 300 , windowHeight - nebData.rec.height}, //sprite position x and y
-        0,          // int starting sprite frame
-        1.0/15.0,   // float update time for each animation frame
-        0           // float running time
-    };
-
-    AnimData nebulae[2]{nebData, neb2Data};
+        nebulae[i].rec = {0.0, 0.0, nebula.width/8, nebula.height/8},    //rectangle x,y, width, height
+        nebulae[i].pos.y = windowHeight - nebula.height/8;
+        nebulae[i].pos.x = windowWidth + i*GetRandomValue(valueMin, valueMax);
+        //nebulae[i].pos.x = windowWidth + i*600;
+        nebulae[i].frame = 0;   // int starting sprite frame
+        nebulae[i].updateTime = 1.0/15.0,   // flo at update time for each animation frame
+        nebulae[i].runningTime = 0.0;         // float running time
+    }
 
     //velocities for nebula
-    int nebVel{-600}; //initialize horizontal velocity in pixels/second
+    int nebVel{-200}; //initialize horizontal velocity in pixels/second
 
     int fps{60};
     SetTargetFPS(fps);
@@ -101,12 +99,12 @@ int main()
 
         //update Scarfy's vertical position
         scarfyData.pos.y += velocity * dT; //scaling the position by delta Time
-
+        
         //update nebula's horizontal postion
-        nebulae[0].pos.x += nebVel * dT;
-
-        //update second nebula's horizontal postion       
-        nebulae[1].pos.x += nebVel * dT;
+        for( int i = 0; i < 6; i++)
+        {
+            nebulae[i].pos.x += nebVel * dT;
+        }
 
         //update character animation frame if character not already in the air
         if (!isInAir)
@@ -127,36 +125,29 @@ int main()
         }
 
         //update nebula animation frames
-        nebulae[0].runningTime += dT;
-        if ( nebulae[0].runningTime >= nebulae[0].updateTime)
+        for( int i = 0; i < 6; i++)
         {
-            nebulae[0].runningTime = 0.0;
-            nebulae[0].rec.x = nebulae[0].frame * nebulae[0].rec.width;
-            ++nebulae[0].frame;
-            if(nebulae[0].frame > 7)
+            nebulae[i].runningTime += dT;
+            if ( nebulae[i].runningTime >= nebulae[i].updateTime)
             {
-                nebulae[0].frame = 0;
-            }
-        }
-
-        nebulae[1].runningTime += dT;
-        if ( nebulae[1].runningTime >= nebulae[1].updateTime)
-        {
-            nebulae[1].runningTime = 0.0;
-            nebulae[1].rec.x = nebulae[1].frame * nebulae[1].rec.width;
-            ++nebulae[1].frame;
-            if(nebulae[1].frame > 7)
-            {
-                nebulae[1].frame = 0;
+                nebulae[i].runningTime = 0.0;
+                nebulae[i].rec.x = nebulae[i].frame * nebulae[i].rec.width;
+                ++nebulae[i].frame;
+                if(nebulae[i].frame > 7)
+                {
+                    nebulae[i].frame = 0;
+                }
             }
         }
 
         //Draw scarfy
         DrawTextureRec(scarfy, scarfyData.rec, scarfyData.pos, WHITE);
+
         //Draw nebula
-        DrawTextureRec(nebula, nebulae[0].rec, nebulae[0].pos, WHITE);
-        //Draw second nebula
-        DrawTextureRec(nebula, nebulae[1].rec, nebulae[1].pos, WHITE);
+        for(int i = 0; i < 6; i++)
+        {
+        DrawTextureRec(nebula, nebulae[i].rec, nebulae[i].pos, WHITE);            
+        }
 
         //stop drawing
         EndDrawing();
