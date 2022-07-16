@@ -11,6 +11,29 @@ struct AnimData
     float runningTime;
 };
 
+bool isOnGround(AnimData data, int height)
+{
+    return data.pos.y >= height - data.rec.height;
+};
+
+AnimData updateAnimData(AnimData data, float deltaTime, Texture2D spriteSheet)
+{
+    //update running time
+    data.runningTime += deltaTime;
+    if (data.runningTime >= data.updateTime)
+    {
+        data.runningTime = 0.0;
+        // update animation frame
+        data.rec.x = data.frame * data.rec.width;
+        data.frame++;
+        if (data.frame > (spriteSheet.width / data.rec.width))
+        {
+            data.frame = 0;
+        }
+    }
+
+    return data;
+};
 
 int main()
 {
@@ -22,7 +45,7 @@ int main()
     InitWindow(windowWidth, windowHeight, "Dapper Dasher");
 
     int valueMin {300}; //minimum value between each spawning nebula
-    int valueMax {600}; //maximum value between each spawning nebula
+    int valueMax {650}; //maximum value between each spawning nebula
 
     //vertical (jump) velocities for character
     int velocity{60};    // intialize velocity to 60 pixels/sec (target FPS is set to 60)
@@ -39,7 +62,7 @@ int main()
                         {0.0, 0.0, scarfy.width/6, scarfy.height}, //rectangle x,y, width, height
                         {windowWidth/2 - scarfyData.rec.width/2, windowHeight - scarfy.height}, //sprite position x and y
                          0,         // int starting sprite frame
-                         1.0/12.0,  // float update time for each animation frame
+                         1.0/15.0,  // float update time for each animation frame
                          0          // float running time
                         };
   
@@ -76,7 +99,7 @@ int main()
         ClearBackground(DARKGRAY);
 
         //check to see if character is on the ground; if so then vertical velocity is 0
-        if(scarfyData.pos.y >= windowHeight - scarfy.height)
+        if(isOnGround(scarfyData, windowHeight))
         {   
             isInAir = false;
             velocity = noMove;
@@ -86,7 +109,7 @@ int main()
         {
             //apply gravity because character is in the air
             velocity += gravity * dT;     //scaling by delta time, which is the time since the last frame    
-            isInAir = true;               
+            isInAir = true;  
         }
      
         //characer jumps when spacebar is pressed and if character is not already in the air
@@ -110,34 +133,13 @@ int main()
         if (!isInAir)
         {
             //update the running time by adding the time between frames
-            scarfyData.runningTime += dT;
-            if (scarfyData.runningTime >= scarfyData.updateTime)
-            {
-                scarfyData.runningTime = 0.0;
-                //updating character animation frame
-                scarfyData.rec.x = scarfyData.frame * scarfyData.rec.width;
-                ++scarfyData.frame;
-                if (scarfyData.frame > 5)
-                {
-                    scarfyData.frame = 0;
-                }
-            }
+           scarfyData = updateAnimData(scarfyData, dT, scarfy);
         }
 
         //update nebula animation frames
         for( int i = 0; i < 6; i++)
         {
-            nebulae[i].runningTime += dT;
-            if ( nebulae[i].runningTime >= nebulae[i].updateTime)
-            {
-                nebulae[i].runningTime = 0.0;
-                nebulae[i].rec.x = nebulae[i].frame * nebulae[i].rec.width;
-                ++nebulae[i].frame;
-                if(nebulae[i].frame > 7)
-                {
-                    nebulae[i].frame = 0;
-                }
-            }
+           nebulae[i] = updateAnimData(nebulae[i], dT, nebula);
         }
 
         //Draw scarfy
