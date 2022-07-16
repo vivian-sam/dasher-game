@@ -1,5 +1,4 @@
 #include "raylib.h"
-#include <iostream>;
 
 //animation variables
 struct AnimData
@@ -11,11 +10,14 @@ struct AnimData
     float runningTime;
 };
 
+//boolean to check if sprite is on the ground
 bool isOnGround(AnimData data, int height)
 {
     return data.pos.y >= height - data.rec.height;
 };
 
+
+//function to update animation frames of sprite that is passed by value
 AnimData updateAnimData(AnimData data, float deltaTime, Texture2D spriteSheet)
 {
     //update running time
@@ -35,11 +37,27 @@ AnimData updateAnimData(AnimData data, float deltaTime, Texture2D spriteSheet)
     return data;
 };
 
+
+//function to draw back/mid/foreground and update so that it's continuous
+float drawBackground(Texture2D sheet, float sheetX, float scale)
+{
+    Vector2 sheet1Pos{sheetX, 0.0};
+    DrawTextureEx(sheet, sheet1Pos, 0.0, scale, WHITE);
+    Vector2 sheet2Pos{sheetX + sheet.width*2, 0.0};
+    DrawTextureEx(sheet, sheet2Pos, 0.0, scale, WHITE); 
+
+    if (sheetX <= -sheet.width*2) 
+    {
+        sheetX = 0.0;
+    }
+    return sheetX;
+}
+
 int main()
 {
     //window dimensions
-    const int windowWidth{800};
-    const int windowHeight{450};
+    const int windowWidth{500};
+    const int windowHeight{350};
 
     //initialize popup window
     InitWindow(windowWidth, windowHeight, "Dapper Dasher");
@@ -68,19 +86,22 @@ int main()
   
     //animation daa for nebula variables
     Texture2D nebula = LoadTexture("textures/12_nebula_spritesheet.png");
+    
+    int totalNebulae{6};
+    AnimData nebulae[totalNebulae]{};
 
-    AnimData nebulae[6]{};
-
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < totalNebulae - 1 ; i++)
     {
         nebulae[i].rec = {0.0, 0.0, nebula.width/8, nebula.height/8},    //rectangle x,y, width, height
         nebulae[i].pos.y = windowHeight - nebula.height/8;
-        nebulae[i].pos.x = windowWidth + i*GetRandomValue(valueMin, valueMax);
+        nebulae[i].pos.x = windowWidth + i*300;
         //nebulae[i].pos.x = windowWidth + i*600;
         nebulae[i].frame = 0;   // int starting sprite frame
         nebulae[i].updateTime = 1.0/15.0,   // flo at update time for each animation frame
         nebulae[i].runningTime = 0.0;         // float running time
     }
+
+    float finishLine{ nebulae[totalNebulae - 1].pos.x + 100};
 
     //velocities for nebula
     int nebVel{-200}; //initialize horizontal velocity in pixels/second
@@ -88,6 +109,13 @@ int main()
     int fps{60};
     SetTargetFPS(fps);
 
+    //setting up background, midground and foreground
+    Texture2D background = LoadTexture("textures/far-buildings.png");
+    Texture2D midground = LoadTexture("textures/back-buildings.png");
+    Texture2D foreground = LoadTexture("textures/foreground.png");
+    float bgX{};
+    float mgX{};
+    float fgX{};
 
     //while esc/x button not pressed, then run the game code in while loop
     while(!WindowShouldClose())
@@ -98,11 +126,24 @@ int main()
         BeginDrawing();
         ClearBackground(DARKGRAY);
 
+        //set the x position of background, midground and foreground so all three scroll left
+        bgX -= 20 * dT;
+        mgX -= 40 * dT;
+        fgX -= 60 * dT;
+
+        //draw the background, midground, foreground and update all three so it loops
+        bgX = drawBackground(background, bgX, 2.0);
+        mgX = drawBackground(midground, mgX, 1.7);
+        fgX = drawBackground(foreground, fgX, 2.0);
+
         //check to see if character is on the ground; if so then vertical velocity is 0
         if(isOnGround(scarfyData, windowHeight))
         {   
             isInAir = false;
             velocity = noMove;
+
+            //update the running time by adding the time between frames
+           scarfyData = updateAnimData(scarfyData, dT, scarfy);
         }
 
         else
@@ -129,12 +170,8 @@ int main()
             nebulae[i].pos.x += nebVel * dT;
         }
 
-        //update character animation frame if character not already in the air
-        if (!isInAir)
-        {
-            //update the running time by adding the time between frames
-           scarfyData = updateAnimData(scarfyData, dT, scarfy);
-        }
+        //update finishline position
+        finishLine += nebVel * dT;
 
         //update nebula animation frames
         for( int i = 0; i < 6; i++)
@@ -156,6 +193,9 @@ int main()
     }
     UnloadTexture(scarfy);
     UnloadTexture(nebula);
+    UnloadTexture(background);
+    UnloadTexture(midground);
+    UnloadTexture(foreground);
 
     CloseWindow();
     
