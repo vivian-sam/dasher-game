@@ -10,6 +10,11 @@ struct AnimData
     float runningTime;
 };
 
+//-------------------------------------------------------------------------------------
+// FUNCTIONS FOR USE IN MAIN CODE
+//-------------------------------------------------------------------------------------
+
+
 //boolean to check if sprite is on the ground
 bool isOnGround(AnimData data, int height)
 {
@@ -51,6 +56,42 @@ float drawBackground(Texture2D sheet, float sheetX, float scale)
         sheetX = 0.0;
     }
     return sheetX;
+}
+
+//function to reset Scarfy, nebulae, and collision variables when user wants to play again
+void tryAgain(bool &collision, int totalNebulae, AnimData nebulae[], float &finishLine, AnimData &scarfyData, Texture2D nebula, int windowHeight, int windowWidth)
+{
+    collision = false;
+
+    // reset nebulae variables
+    for (int i = 0; i < totalNebulae ; i++)
+    {
+        nebulae[i].rec = {0.0, 0.0, nebula.width/8, nebula.height/8},    //rectangle x,y, width, height
+        nebulae[i].pos.y = windowHeight - nebula.height/8;
+        nebulae[i].pos.x = windowWidth + i*300;
+        //nebulae[i].pos.x = windowWidth + i*600;
+        nebulae[i].frame = 0;   // int starting sprite frame
+        nebulae[i].updateTime = 1.0/15.0,   // float update time for each animation frame
+        nebulae[i].runningTime = 0.0;         // float running time
+    }
+                    
+    //reset finish line
+    finishLine = { nebulae[totalNebulae - 1].pos.x + 20};
+
+    //reset Scarfy's position
+    scarfyData.pos.x = windowWidth/2 - scarfyData.rec.width/2;
+}
+
+//function to unload textures and properly close drawing
+void cleanUp(Texture2D scarfy, Texture2D nebula, Texture2D background, Texture2D midground, Texture2D foreground)
+{
+    UnloadTexture(scarfy);
+    UnloadTexture(nebula);
+    UnloadTexture(background);
+    UnloadTexture(midground);
+    UnloadTexture(foreground);
+ 
+    CloseWindow();
 }
 
 //-------------------------------------------------------------------------------------
@@ -245,26 +286,7 @@ int main()
             //If user pressed Y, reset the game variables
             if(IsKeyPressed(KEY_Y))
             {
-                collision = false;
-                
-                ClearBackground(DARKGRAY);
-                // reset nebulae variables
-                for (int i = 0; i < totalNebulae ; i++)
-                {
-                    nebulae[i].rec = {0.0, 0.0, nebula.width/8, nebula.height/8},    //rectangle x,y, width, height
-                    nebulae[i].pos.y = windowHeight - nebula.height/8;
-                    nebulae[i].pos.x = windowWidth + i*300;
-                    //nebulae[i].pos.x = windowWidth + i*600;
-                    nebulae[i].frame = 0;   // int starting sprite frame
-                    nebulae[i].updateTime = 1.0/15.0,   // flo at update time for each animation frame
-                    nebulae[i].runningTime = 0.0;         // float running time
-                }
-
-                //reset finish line
-                finishLine = { nebulae[totalNebulae - 1].pos.x + 20};
-                
-                //reset Scarfy's position
-                scarfyData.pos.x = windowWidth/2 - scarfyData.rec.width/2;
+                tryAgain(collision, totalNebulae, nebulae, finishLine, scarfyData, nebula, windowHeight, windowWidth);
             }
 
             if(IsKeyPressed(KEY_N))
@@ -307,39 +329,14 @@ int main()
                 //If user pressed Y, reset the game variables
                 if(IsKeyPressed(KEY_Y))
                 {
-                    collision = false;
-                    ClearBackground(DARKGRAY);
-
-                    // reset nebulae variables
-                    for (int i = 0; i < totalNebulae ; i++)
-                    {
-                        nebulae[i].rec = {0.0, 0.0, nebula.width/8, nebula.height/8},    //rectangle x,y, width, height
-                        nebulae[i].pos.y = windowHeight - nebula.height/8;
-                        nebulae[i].pos.x = windowWidth + i*300;
-                        //nebulae[i].pos.x = windowWidth + i*600;
-                        nebulae[i].frame = 0;   // int starting sprite frame
-                        nebulae[i].updateTime = 1.0/15.0,   // float update time for each animation frame
-                        nebulae[i].runningTime = 0.0;         // float running time
-                    }
-                    
-                    //reset finish line
-                    finishLine = { nebulae[totalNebulae - 1].pos.x + 20};
-
-                    //reset Scarfy's position
-                    scarfyData.pos.x = windowWidth/2 - scarfyData.rec.width/2;
+                    tryAgain(collision, totalNebulae, nebulae, finishLine, scarfyData, nebula, windowHeight, windowWidth);
                 }
 
                 if(IsKeyPressed(KEY_N))
                 {
                     EndDrawing();
 
-                    UnloadTexture(scarfy);
-                    UnloadTexture(nebula);
-                    UnloadTexture(background);
-                    UnloadTexture(midground);
-                    UnloadTexture(foreground);
-    
-                    CloseWindow();
+                    cleanUp( scarfy, nebula, background, midground, foreground);
         
                     return 0;
                 }
@@ -354,13 +351,8 @@ int main()
 //-------------------------------------------------------------------------------------
 // CLOSING THE FILE
 //-------------------------------------------------------------------------------------
-    UnloadTexture(scarfy);
-    UnloadTexture(nebula);
-    UnloadTexture(background);
-    UnloadTexture(midground);
-    UnloadTexture(foreground);
- 
-    CloseWindow();
+
+    cleanUp( scarfy, nebula, background, midground, foreground);
     
     return 0;
 }
